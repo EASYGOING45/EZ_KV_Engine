@@ -114,3 +114,102 @@ private:
 
     int _element_count; // 跳表元素个数
 };
+
+// 创建新节点
+template <typename K, typename V>
+Node<K, V> *SkipList<K, V>::create_node(const K k, const V v, int level)
+{
+    Node<K, V> *n = new Node<K, V>(k, v, level);
+    return n;
+}
+
+// Insert given key and value in skip list
+// return 1 means element exists
+// return 0 means insert successfully
+/*
+                           +------------+
+                           |  insert 50 |
+                           +------------+
+level 4     +-->1+                                                      100
+                 |
+                 |                      insert +----+
+level 3         1+-------->10+---------------> | 50 |          70       100
+                                               |    |
+                                               |    |
+level 2         1          10         30       | 50 |          70       100
+                                               |    |
+                                               |    |
+level 1         1    4     10         30       | 50 |          70       100
+                                               |    |
+                                               |    |
+level 0         1    4   9 10         30   40  | 50 |  60      70       100
+                                               +----+
+
+*/
+
+template <typename K, typename V>
+int SkipList<K, V>::insert_element(const K key, const V value)
+{
+    mtx.lock();
+    Node<K, V> *current = this->_header;
+
+    // 创建新链表并初始化
+    Node<K, V> *update[_max_level + 1];
+    memset(update, 0, sizeof(Node<K, V> *) * (_max_level + 1)); // 初始化update数组为0
+
+    // 从最高层开始查找要插入的位置
+    for (int i = _skip_list_level; i >= 0; i--)
+    {
+        while (current->forward[i] != NULL && current->forward[i]->get_key() < key)
+        {
+            current = current->forward[i];
+        }
+        update[i] = current;
+    }
+
+    // 到达第0层并且右边的节点的key等于要插入的key
+    current = current->forward[0];
+
+    // 如果当前节点的key等于要插入的key，说明跳表中已经存在要插入的key，直接返回
+    if (current != NULL && current->get_key() == key)
+    {
+        std::cout << "Key: " << key << ", exists" << std::endl;
+        mtx.unlock();
+        return 1;
+    }
+
+    // if current is NULL that means we have reached to end of the level
+    // if current's key is not equal to key that means we have to insert node between update[0] and current node
+    if (current == NULL || current->get_key() != key)
+    {
+
+        // Generate a random level for node
+        int random_level = get_random_level();
+
+        // If random level is greater thar skip list's current level, initialize update value with pointer to header
+        if (random_level > _skip_list_level)
+        {
+            for (int i = _skip_list_level + 1; i < random_level + 1; i++)
+            {
+                update[i] = _header;
+            }
+            _skip_list_level = random_level;
+        }
+
+        // create new node with random level generated
+        Node<K, V> *inserted_node = create_node(key, value, random_level);
+
+        // insert node
+        for (int i = 0; i <= random_level; i++)
+        {
+            inserted_node->forward[i] = update[i]->forward[i];
+            update[i]->forward[i] = inserted_node;
+        }
+        std::cout << "Successfully inserted key:" << key << ", value:" << value << std::endl;
+        _element_count++;
+    }
+    mtx.unlock();
+    return 0;
+}
+
+// Tag-1
