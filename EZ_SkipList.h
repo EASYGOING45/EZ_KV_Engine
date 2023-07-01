@@ -213,3 +213,98 @@ int SkipList<K, V>::insert_element(const K key, const V value)
 }
 
 // Tag-1
+// 打印跳表
+template <typename K, typename V>
+void SkipList<K, V>::display_list()
+{
+    std::cout << "\n*****Skip List*****"
+              << "\n";
+    for (int i = 0; i <= _skip_list_level; i++)
+    {
+        Node<K, V> *node = this->_header->forward[i];
+        std::cout << "Level " << i << ": ";
+        while (node != NULL)
+        {
+            std::cout << node->get_key() << ":" << node->get_value() << ";";
+            node = node->forward[i];
+        }
+        std::cout << std::endl;
+    }
+}
+
+// Dump data in memory to file
+template <typename K, typename V>
+void SkipList<K, V>::dump_file()
+{
+    std::cout << "dump_file------------------" << std::endl;
+    _file_writer.open(STORE_FILE);
+    Node<K, V> *node = this->_header->forwardd[0];
+
+    while (node != NULL)
+    {
+        _file_writer << node->get_key() << ":" << node->get_value() << "\n";
+        std::cout << node->get_key() << ":" << node->get_value() << ";\n";
+        node = node->forward[0];
+    }
+
+    _file_writer.flush(); // 刷新缓冲区
+    _file_writer.close(); // 关闭缓冲区
+    return;
+}
+
+// 从磁盘加载数据
+template <typename K, typename V>
+void SkipList<K, V>::load_file()
+{
+    _file_reader.open(STORE_FILE);
+    std::cout << "load_file-----------------" << std::endl;
+    std::string line;
+    std::string *key = new std::string();
+    std::string *value = new std::string();
+    while (getline(_file_reader, line))
+    {
+        get_key_value_from_string(line, key, value);
+        if (key->empty() || value->empty())
+        {
+            std::cout << "key or value is empty" << std::endl;
+            continue;
+        }
+        insert_element(*key, *value);
+        std::cout << "key:" << *key << "value:" << *value << std::endl;
+    }
+    _file_reader.close();
+}
+
+// 获取当前跳表的大小
+template <typename K, typename V>
+int SkipList<K, V>::size()
+{
+    return _element_count;
+}
+
+// 从字符串中获取key和value
+template <typename K, typename V>
+void SkipList<K, V>::get_key_value_from_string(const std::string &str, std::string *key, std::string *value)
+{
+    if (!is_valid_string(str))
+    {
+        return;
+    }
+    *key = str.substr(0, str.find(delimiter));
+    *value = str.substr(str.find(delimiter) + 1, str.length());
+}
+
+// 判断字符串是否合法
+template <typename K, typename V>
+bool SkipList<K, V>::is_valid_string(const std::string &str)
+{
+    if (str.empty())
+    {
+        return false;
+    }
+    if (str.find(delimiter) == std::string::npos)
+    {
+        return false;
+    }
+    return true;
+}
