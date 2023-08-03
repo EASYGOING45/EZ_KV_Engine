@@ -265,3 +265,20 @@ void SkipList<K,V>::load_file(){
     delete value;   //释放内存
     _file_reader.close();   //关闭文件
 }
+
+//Get current SkipList size 获取跳表的大小
+template<typename K,typename V>
+int SkipList<K,V>::size(){
+    return _element_count;
+}
+
+template<typename K,typename V>
+void SkipList<K,V>::get_key_value_from_string(const std::string& str,std::string* key,std::string* value){
+    if(!is_valid_string(str)){
+        return ;
+    }
+    *key = str.substr(0,str.find(delimiter));   //获取key
+    *value=str.substr(str.find(delimiter)+1,str.length());  //获取value  substr(pos,n) 返回从pos开始的n个字符
+}
+
+//NEXT_DAY IS_VALID_STRING
