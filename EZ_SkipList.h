@@ -211,3 +211,19 @@ int SkipList<K,V>::insert_element(const K key,const V value){
     mtx.unlock();   //解锁
     return 0;       //插入成功
 }
+
+//输出展示跳表 Display skip list
+template<typename K,typename V>
+void SkipList<K,V>::display_list(){
+    std::cout<<"\n*****Skip List*****"<<"\n";
+    for(int i=0;i<=_skip_list_level;i++){
+        Node<K,V> *node=this->_header->forward[i];
+        std::cout<<"Level "<<i<<": ";
+        while(node != NULL){
+            std::cout<<node->get_key()<<":"<<node->get_value()<<";";
+            node = node->forward[i];
+        }
+        std::cout<<std::endl;
+    }
+}
+
