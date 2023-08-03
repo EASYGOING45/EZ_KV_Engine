@@ -101,7 +101,7 @@ private:
     //跳表的最大层数
     int _max_level;
 
-    //跳表的当前层数
+    //跳表的当前层数 也就是最高层数为几
     int _skip_list_level;
 
     //跳表的头节点
@@ -114,3 +114,100 @@ private:
     //skiplist current element count 跳表中节点的个数
     int _element_count;
 };
+
+
+//create new node
+template<typename K,typename V>
+Node<K,V>* SkipList<K,V>::create_node(const K k,const V v,int level){
+    Node<K,V> *n=new Node<K,V>(k,v,level);  //创建节点 level是跳表的层数
+    return n;
+}
+
+//在跳表中插入给定的key和value
+//return 1 表示 element exists 表示元素已经存在
+//return 0 表示 element inserted successfully 表示元素插入成功
+
+/* 
+                           +------------+
+                           |  insert 50 |
+                           +------------+
+level 4     +-->1+                                                      100
+                 |
+                 |                      insert +----+
+level 3         1+-------->10+---------------> | 50 |          70       100
+                                               |    |
+                                               |    |
+level 2         1          10         30       | 50 |          70       100
+                                               |    |
+                                               |    |
+level 1         1    4     10         30       | 50 |          70       100
+                                               |    |
+                                               |    |
+level 0         1    4   9 10         30   40  | 50 |  60      70       100
+                                               +----+
+
+*/
+
+template<typename K,typename V>
+int SkipList<K,V>::insert_element(const K key,const V value){
+    mtx.lock();     //加锁 保证线程安全
+    Node<K,V> *current=this->_header;   //从头节点开始
+
+    //创建update数组并初始化为0 update数组用于保存要更新的节点
+    //update is array which put node that the node->forward[i] should be operated later
+    //update数组是一个指针数组，用于保存要更新的节点
+    Node<K,V> *update[_max_level+1];    //update数组的大小为_max_level+1
+    memset(update,0,sizeof(Node<K,V>*)*(_max_level+1)); //初始化update数组为0
+
+    //从跳表的最高层开始查找要插入的位置
+    for(int i=_skip_list_level;i>=0;i--){
+        while(current->forward[i]!=NULL && current->forward[i]->get_key() < key)
+        {
+            current = current->forward[i];  //向前查找 直到找到要插入的位置
+        }
+        update[i]=current;  //保存要更新的节点
+    }
+
+    //到达这里 current指向要插入的位置的前一个节点
+    //reached level 0 and forward pointer to right node,which is desired to insert key
+    current = current->forward[0];  //current指向要插入的位置的前一个节点的下一个节点
+
+    //if current node have key equal to searched key,we get it
+    //如果current节点的key等于要插入的key，那么就说明要插入的key已经存在
+    if(current != NULL && current->get_key()==key){
+        std::cout<<"key: "<<key<<",exists"<<std::endl;
+        mtx.unlock();   //解锁
+        return 1;
+    }
+
+    //if current is NULL that means we have reached to end of the level
+    //如果current为NULL，说明要插入的key比跳表中的所有key都大，那么就将跳表的层数加1
+    //if current's key is not equal to key that means we have to insert node between update[0] and current node 
+    //如果current节点的key不等于要插入的key，那么就要插入一个新的节点
+    if(current == NULL || current->get_key() != key){
+        //Generate a random level for node 生成一个随机层数
+        int random_level = get_random_level();
+
+        //If random level is greater thar skip list's current level, initialize update value with pointer to header
+        //如果随机层数大于跳表的当前层数，那么就将update数组中的值初始化为头节点
+        if(random_level > _skip_list_level){
+            for(int i=_skip_list_level+1;i<random_level+1;i++){
+                update[i] = _header;
+            }
+            _skip_list_level = random_level;
+        }
+
+        //create new node with random level generated 创建一个新的节点 该节点的层数为随机层数
+        Node<K,V>* inserted_node = create_node(key,value,random_level); //创建一个新的节点
+
+        //insert node by rearranging pointers 将新节点插入到跳表中
+        for(int i=0;i<=random_level;i++){
+            inserted_node->forward[i] = update[i]->forward[i];
+            update[i]->forward[i] = inserted_node;
+        }
+        std::cout<<"Successfully inserted key:"<<key<<", value:"<<value<<std::endl;
+        _element_count++;   //跳表中节点的个数加1
+    }
+    mtx.unlock();   //解锁
+    return 0;       //插入成功
+}
