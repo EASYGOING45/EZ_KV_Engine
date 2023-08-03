@@ -227,3 +227,41 @@ void SkipList<K,V>::display_list(){
     }
 }
 
+//Dump data in memory to file 将内存中的数据写入到文件中
+template<typename K,typename V>
+void SkipList<K,V>::dump_file(){
+    std::cout<<"dump_file-----------"<<std::endl;
+    _file_writer.open(STORE_FILE);
+    Node<K,V> *node = this->_header->forward[0];    //从头节点开始
+
+    while(node != NULL){
+        _file_writer<<node->get_key()<<":"<<node->get_value()<<"\n";
+        std::cout<<node->get_key()<<":"<<node->get_value()<<";\n";
+        node = node->forward[0];
+    }
+
+    _file_writer.flush();   //刷新缓冲区 flush buffer
+    _file_writer.close();   //关闭文件
+    return ;
+}
+
+//Load data from file to memory 从文件中加载数据到内存中
+template<typename K,typename V>
+void SkipList<K,V>::load_file(){
+    _file_reader.open(STORE_FILE);
+    std::cout<<"load_file--------------"<<std::endl;
+    std::string line;
+    std::string* key=new std::string();
+    std::string* value=new std::string();
+    while(getline(_file_reader,line)){
+        get_key_value_from_string(line,key,value);
+        if(key->empty() || value->empty()){
+            continue;
+        }
+        insert_element(*key,*value);    //将数据插入到跳表中
+        std::cout<<"key:"<<*key<<"value:"<<*value<<std::endl;
+    }
+    delete key;     //释放内存
+    delete value;   //释放内存
+    _file_reader.close();   //关闭文件
+}
