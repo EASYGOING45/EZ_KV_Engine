@@ -78,3 +78,39 @@ void Node<K, V>::set_value(V value)
     this->value = value;
 }
 
+//Class Template for Skip list
+//跳表类模板
+template<typename K,typename V>
+class SkipList{
+public:
+    SkipList(int);
+    ~SkipList();
+    int get_random_level();     //生成随机层数 用于跳表中的插入操作
+    Node<K,V>* create_node(K,V,int);    //创建节点
+    int insert_element(K,V);    //插入节点 用于跳表中的插入操作
+    void display_list();        //显示跳表中的节点 用于跳表中的插入操作
+    bool search_element(K);     //查找节点 用于跳表中的查找操作
+    void delete_element(K);     //删除节点 用于跳表中的删除操作
+    void dump_file();           //将跳表中的数据写入文件
+    void load_file();           //从文件中读取数据到跳表中
+    int size();                 //返回跳表中节点的个数 
+private:
+    void get_key_value_from_string(const std::string& str,std::string* key,std::string* value); //从字符串中获取key和value
+    bool is_valid_string(const std::string& str); //判断字符串是否合法
+private:
+    //跳表的最大层数
+    int _max_level;
+
+    //跳表的当前层数
+    int _skip_list_level;
+
+    //跳表的头节点
+    Node<K,V> *_header;
+
+    //文件operator 
+    std::ofstream _file_writer;     //写文件
+    std::ifstream _file_reader;     //读文件
+
+    //skiplist current element count 跳表中节点的个数
+    int _element_count;
+};
