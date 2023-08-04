@@ -309,7 +309,7 @@ void SkipList<K,V>::delete_element(K key){
         update[i] = current;
     }
 
-    curret = current->forward[0];   //当前节点
+    current = current->forward[0];   //当前节点
     if(current!=NULL && current->get_key()==key){
         //从最低层开始删除节点并重新连接指针
         for(int i=0;i<=_skip_list_level;i++){
@@ -381,14 +381,14 @@ bool SkipList<K,V>::search_element(K key){
 //Construct skip list 初始化跳表
 template<typename K,typename V>
 SkipList<K,V>::SkipList(int max_level){
-    this->max_level = max_level;    //跳表的最大层数
+    this->_max_level = max_level;    //跳表的最大层数
     this->_skip_list_level = 0;    //跳表的当前层数
     this->_element_count = 0;      //跳表中节点的个数
 
     //create header node and initialize key and value to null 创建头节点并将key和value初始化为null
     K k;
     V v;
-    this->header = new Node<K,V>(k,v,_max_level);   //创建头节点
+    this->_header = new Node<K,V>(k,v,_max_level);   //创建头节点
 };
 
 
