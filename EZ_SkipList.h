@@ -406,3 +406,13 @@ SkipList<K,V>::~SkipList(){
 
 
 //NEXT=>get_random_level
+template<typename K,typename V>
+int SkipList<K,V>::get_random_level(){
+    int k = 1;
+    while(rand() % 2){
+        k++;
+    }
+
+    k = (k < _max_level) ? k : _max_level;
+    return k;
+};
