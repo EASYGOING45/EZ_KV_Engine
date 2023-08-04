@@ -334,4 +334,75 @@ void SkipList<K,V>::delete_element(K key){
 }
 
 //Search
+/*
+                           +------------+
+                           |  select 60 |
+                           +------------+
+level 4     +-->1+                                                      100
+                 |
+                 |
+level 3         1+-------->10+------------------>50+           70       100
+                                                   |
+                                                   |
+level 2         1          10         30         50|           70       100
+                                                   |
+                                                   |
+level 1         1    4     10         30         50|           70       100
+                                                   |
+                                                   |
+level 0         1    4   9 10         30   40    50+-->60      70       100
+*/
+template<typename K,typename V>
+bool SkipList<K,V>::search_element(K key){
+    std::cout<<"search_element-----------"<<std::endl;
+    Node<K,V> *current = _header;   //从头节点开始
+    //start from highest level of skip list 从跳表的最高层开始
+    for(int i=_skip_list_level;i>=0;i--){
+        while(current->forward[i]&&current->forward[i]->get_key()<key){
+            current = current->forward[i];  //向右移动
+        }
+    }
 
+    //reached level 0 and advance pointer to right,which is possibly our desired node 到达第0层并且向右移动指针，这可能是我们想要的节点
+    //到达第0层并且向右移动指针，这可能是我们想要的节点
+    current = current->forward[0];
+
+    //如果current节点的key等于要查找的key，那么就返回true
+    if(current and current->get_key() == key){
+        std::cout<<"Found key: "<<key<<", value: "<<current->get_value()<<std::endl;
+        return true;
+    }
+
+    std::cout<<"Not Found Key:"<<key<<std::endl;
+    return false;
+}
+
+
+//Construct skip list 初始化跳表
+template<typename K,typename V>
+SkipList<K,V>::SkipList(int max_level){
+    this->max_level = max_level;    //跳表的最大层数
+    this->_skip_list_level = 0;    //跳表的当前层数
+    this->_element_count = 0;      //跳表中节点的个数
+
+    //create header node and initialize key and value to null 创建头节点并将key和value初始化为null
+    K k;
+    V v;
+    this->header = new Node<K,V>(k,v,_max_level);   //创建头节点
+};
+
+
+//析构函数
+template<typename K,typename V>
+SkipList<K,V>::~SkipList(){
+    if (_file_writer.is_open()) {
+        _file_writer.close();
+    }
+    if (_file_reader.is_open()) {
+        _file_reader.close();
+    }
+    delete _header;
+}
+
+
+//NEXT=>get_random_level
