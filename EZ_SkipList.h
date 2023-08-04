@@ -282,3 +282,56 @@ void SkipList<K,V>::get_key_value_from_string(const std::string& str,std::string
 }
 
 //NEXT_DAY IS_VALID_STRING
+template<typename K,typename V>
+bool SkipList<K,V>::is_valid_string(const std::string& str){    //判断字符串是否为空
+    if(str.empty()){
+        return false;
+    }
+    if(str.find(delimiter) == std::string::npos){
+        return false;       //没有找到分隔符 npos表示没有找到
+    }
+    return true;
+}
+
+//Delete element from skip list
+template<typename K,typename V>
+void SkipList<K,V>::delete_element(K key){
+    mtx.lock();     //加锁
+    Node<K,V> *current = this->_header; //从头节点开始
+    Node<K,V> *update[_max_level+1];    //update数组
+    memset(update,0,sizeof(Node<K,V>*)*(_max_level+1));   //初始化update数组
+
+    //start from highest level of skip list 从跳表的最高层开始
+    for(int i=_skip_list_level;i>=0;i--){
+        while(current->forward[i] != NULL && current->forward[i]->get_key() < key){
+            current = current->forward[i];
+        }
+        update[i] = current;
+    }
+
+    curret = current->forward[0];   //当前节点
+    if(current!=NULL && current->get_key()==key){
+        //从最低层开始删除节点并重新连接指针
+        for(int i=0;i<=_skip_list_level;i++){
+            //如果在第i层中找到了key，那么就将第i层中的节点删除
+            if(update[i]->forward[i]!=current){
+                break;
+            }
+
+            update[i]->forward[i] = current->forward[i];
+        }
+
+        //删除跳表中的层数 Remove levels having no elements
+        while(_skip_list_level > 0 && _header->forward[_skip_list_level]==0){
+            _skip_list_level--;
+        }
+
+        std::cout<<"Successfully deleted key:"<<key<<std::endl;
+        _element_count--;   //跳表中节点的个数减1
+    }
+    mtx.unlock();   //解锁
+    return ;
+}
+
+//Search
+
