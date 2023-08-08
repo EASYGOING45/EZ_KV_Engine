@@ -78,7 +78,7 @@ int main()
         std::cout << "insert elapsed: " << elapsed.count() << std::endl;
     }
 
-    skipList.display_list();
+    // skipList.display_list();
 
     // {
     //     pthread_t threads[NUM_THREADS];
